@@ -9,9 +9,9 @@
 </script>
 
 <QueryClientProvider client={data.queryClient}>
-	<main class="h-full w-full bg-slate-800 p-24 text-white">
+	<div class="flex h-full w-full bg-slate-800 p-2 text-white">
 		<slot />
-	</main>
+	</div>
 	<Toaster />
 	<SvelteQueryDevtools />
 </QueryClientProvider>

@@ -47,9 +47,10 @@ func main() {
 	mux.Handle(PingServiceHandler())
 
 	// Rest API
-	mux.Handle("/static", http.FileServer(http.Dir(fileUploadPath)))
+	mux.Handle("/"+STATIC_PATH+"/", http.FileServer(http.Dir('.')))
 	mux.HandleFunc("/file-upload", UploadFile)
 	mux.HandleFunc("/get-files", ReadUploadedFiles)
+	mux.HandleFunc("/update-file", UpdateFile)
 
 	handler := h2c.NewHandler(mux, &http2.Server{})
 	handler = handleCors(handler)

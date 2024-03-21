@@ -7,7 +7,7 @@ require (
 	github.com/h2non/bimg v1.1.9
 	github.com/rs/cors v1.10.1
 	golang.org/x/net v0.21.0
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
