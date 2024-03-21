@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with Vectornator (http://vectornator.io/) -->
+<svg height="100%" stroke-miterlimit="10" style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" version="1.1" viewBox="0 0 70 115" width="100%" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:vectornator="http://vectornator.io" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+<radialGradient cx="325.031" cy="321.578" gradientTransform="matrix(0.335304 0 0 0.353117 -73.9842 -22.7718)" gradientUnits="userSpaceOnUse" id="RadialGradient" r="82.875">
+<stop offset="0" stop-color="#ff9393"/>
+<stop offset="1" stop-color="#db4444"/>
+</radialGradient>
+<radialGradient cx="341.572" cy="231.156" gradientTransform="matrix(0.335304 0 0 0.353117 -73.9842 -22.7718)" gradientUnits="userSpaceOnUse" id="RadialGradient_2" r="48.6874">
+<stop offset="0" stop-color="#fa7b7b"/>
+<stop offset="1" stop-color="#f16464"/>
+</radialGradient>
+<radialGradient cx="334.383" cy="152.734" gradientTransform="matrix(0.335304 0 0 0.353117 -73.9842 -22.7718)" gradientUnits="userSpaceOnUse" id="RadialGradient_3" r="59.4575">
+<stop offset="0" stop-color="#fb8383"/>
+<stop offset="1" stop-color="#fa5959"/>
+</radialGradient>
+<radialGradient cx="325.394" cy="79.9874" gradientTransform="matrix(0.335304 0 0 0.353117 -73.9842 -22.7718)" gradientUnits="userSpaceOnUse" id="RadialGradient_4" r="19.3881">
+<stop offset="0" stop-color="#ebb3b3"/>
+<stop offset="1" stop-color="#ff3939"/>
+</radialGradient>
+<radialGradient cx="325.031" cy="104.078" gradientTransform="matrix(0.335304 0 0 0.353117 -73.9842 -22.7718)" gradientUnits="userSpaceOnUse" id="RadialGradient_5" r="25.125">
+<stop offset="0" stop-color="#ec8d8d"/>
+<stop offset="1" stop-color="#fc6363"/>
+</radialGradient>
+</defs>
+<g id="Layer-1" vectornator:layerName="Layer 1">
+<path d="M10.9839 68.0784L7.21169 101.658L7.24313 101.658C7.23784 101.75 7.2117 101.84 7.21169 101.933C7.2117 105.259 10.5863 108.267 15.9925 110.375C20.9618 112.313 27.6501 113.487 35 113.487C50.3459 113.487 62.7883 108.315 62.7883 101.933C62.7883 101.84 62.7622 101.75 62.7569 101.658L62.7883 101.658L59.0161 68.0784L58.9742 68.0784C58.5752 73.4494 48.012 77.756 35 77.756C28.6469 77.756 22.8655 76.7276 18.5701 75.0525C14.0677 73.2967 11.2296 70.8273 11.0258 68.0784L10.9839 68.0784Z" fill="url(#RadialGradient)" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Curve 7"/>
+<path d="M10.9839 68.0784C10.9839 62.5622 21.737 58.0904 35.0018 58.0904C48.2665 58.0904 59.0197 62.5622 59.0197 68.0784C59.0197 73.5947 48.2665 78.0665 35.0018 78.0665C28.6486 78.0665 22.8716 77.0407 18.5763 75.3657C13.9033 73.5434 10.9839 70.9527 10.9839 68.0784Z" fill="#ff6b6b" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Oval 5"/>
+<path d="M15.4143 36.114L13.3525 67.4046C13.3525 69.8672 15.9884 72.0831 20.2 73.6444C24.0712 75.0795 29.2759 75.9643 35.0018 75.9643C46.9569 75.9643 56.651 72.1308 56.651 67.4046L54.5892 36.114C54.5892 40.3911 45.8207 43.8623 35.0018 43.8624C29.8201 43.8624 25.1141 43.0697 21.6107 41.771C17.7994 40.3581 15.4143 38.3426 15.4143 36.114Z" fill="url(#RadialGradient_2)" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Curve 8"/>
+<path d="M15.4146 36.1165C15.4146 31.8394 24.1851 28.3721 35.004 28.3721C45.8229 28.3721 54.5933 31.8394 54.5933 36.1165C54.5933 40.3935 45.8229 43.8608 35.004 43.8608C29.8223 43.8608 25.1105 43.0654 21.6071 41.7667C17.7958 40.3538 15.4146 38.345 15.4146 36.1165Z" fill="#ff6b6b" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Oval 6"/>
+<path d="M19.4364 40.9744L19.4364 57.8798L29.244 59.844L29.244 57.3943L21.1653 55.7722L21.1653 41.3164L19.4364 40.9744Z" fill="#e44444" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Curve 9"/>
+<path d="M15.4146 36.1165C15.4146 31.8394 24.1851 28.3721 35.004 28.3721C45.8229 28.3721 54.5933 31.8394 54.5933 36.1165C54.5933 40.3935 45.8229 43.8608 35.004 43.8608C29.8223 43.8608 25.1105 43.0654 21.6071 41.7667C17.7958 40.3538 15.4146 38.345 15.4146 36.1165Z" fill="#ff6b6b" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Oval 7"/>
+<path d="M21.1653 38.8557L21.1653 41.3164L21.1653 55.7722L29.244 57.3943L29.2894 43.5641L30.7775 40.9744L21.1653 38.8557Z" fill="#f85151" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Curve 10"/>
+<path d="M21.1655 38.8586L19.432 40.9693L19.432 57.7324L21.1655 55.7731L21.1655 38.8586Z" fill="#f45c5c" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Rectangle 9"/>
+<path d="M29.244 43.5641L29.2395 59.8431L29.244 43.5641Z" fill="#ff6b6b" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Rectangle 10"/>
+<path d="M13.2783 36.114C13.2783 31.3705 23.0052 27.5251 35.004 27.5251C47.0028 27.5251 56.7297 31.3705 56.7297 36.114C56.7297 40.8575 47.0028 44.7029 35.004 44.7029C29.2572 44.7029 24.0315 43.8208 20.1461 42.3804C15.9191 40.8134 13.2783 38.5856 13.2783 36.114Z" fill="#ff6b6b" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Oval 8"/>
+<path d="M26.586 16.6338L14.1273 30.4495C13.5033 30.983 12.9843 31.5435 12.6289 32.1268L12.5032 32.2592L12.5346 32.2592C12.169 32.9035 11.9583 33.5685 11.9583 34.2565C11.9584 36.8773 14.7585 39.2379 19.2407 40.8995C23.3607 42.4269 28.9062 43.3713 35 43.3713C47.7232 43.3713 58.0417 39.2864 58.0417 34.2565C58.0417 33.5685 57.831 32.9035 57.4654 32.2592L57.5073 32.2592L57.3501 32.0826C57.0007 31.5205 56.4934 30.9872 55.8936 30.4715L43.4245 16.6338L43.3616 16.6338C43.3781 16.7188 43.4245 16.8009 43.4245 16.8876C43.4245 18.7266 39.6517 20.2201 35 20.2201C32.7721 20.2201 30.7538 19.8737 29.2474 19.3153C27.6087 18.7077 26.586 17.8458 26.586 16.8876C26.586 16.8009 26.6324 16.7188 26.6488 16.6338L26.586 16.6338Z" fill="url(#RadialGradient_3)" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Curve 11"/>
+<path d="M28.7543 7.63779C28.7543 6.27325 31.5524 5.16707 35.004 5.16707C38.4556 5.16707 41.2537 6.27325 41.2537 7.63779C41.2537 9.00233 38.4556 10.1085 35.004 10.1085C33.3508 10.1085 31.8476 9.85475 30.7299 9.44041C29.514 8.98963 28.7543 8.34878 28.7543 7.63779Z" fill="#ff6b6b" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Oval 9"/>
+<path d="M28.7543 7.74643C28.7543 4.30378 31.5524 1.51297 35.004 1.51297C38.4556 1.51297 41.2537 4.30378 41.2537 7.74643C41.2537 11.1891 38.4556 13.9799 35.004 13.9799C33.3508 13.9799 31.8476 13.3397 30.7299 12.2943C29.514 11.157 28.7543 9.54022 28.7543 7.74643Z" fill="url(#RadialGradient_4)" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Oval 10"/>
+<path d="M28.755 7.64034L26.5755 16.6338L26.6698 16.6338C26.6381 16.7511 26.5755 16.8662 26.5755 16.9869C26.5755 17.9451 27.5982 18.8071 29.237 19.4146C30.7433 19.973 32.7721 20.3194 35 20.3194C39.6518 20.3194 43.4245 18.8259 43.4245 16.9869C43.4245 16.8662 43.3619 16.7511 43.3302 16.6338L43.4245 16.6338L41.245 7.64034C41.245 9.00488 38.4516 10.1122 35 10.1122C33.3469 10.1122 31.8426 9.85337 30.7249 9.43903C29.5089 8.98826 28.755 8.35133 28.755 7.64034Z" fill="url(#RadialGradient_5)" fill-rule="nonzero" opacity="1" stroke="#e64646" stroke-linecap="butt" stroke-linejoin="round" stroke-width="0.5" vectornator:layerName="Curve 12"/>
+</g>
+</svg>

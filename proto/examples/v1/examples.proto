@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package examples.v1;
+
+
+service ExampleService {
+  rpc Index(IndexRequest) returns (Examples) {}
+}
+
+message Examples {
+  repeated Example examples = 1;
+}
+
+message Example {
+  string id = 1;
+  string name = 2;
+}
+
+message IndexRequest {}
