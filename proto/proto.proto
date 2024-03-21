@@ -1,6 +1,21 @@
 syntax = "proto3";
 
-package ping.v1;
+package proto;
+
+message File {
+  string name = 1;
+  string path = 2;
+  uint32 size = 3;
+  string thumbnail = 4;
+}
+
+message FileUploadResponse {
+  optional File file = 1;
+}
+
+message GetFilesResponse {
+  repeated File files = 1;
+}
 
 message PingRequest {
   int64 number = 1;

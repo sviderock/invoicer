@@ -2,3 +2,8 @@
 backend/bin
 */tmp
 .vscode
+backend/static/uploaded/files/*
+backend/static/uploaded/thumbnails/*
+# !backend/static/uploaded/files
+# !backend/static/uploaded/thumbnails
+!**/.gitkeep

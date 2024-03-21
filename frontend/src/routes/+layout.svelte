@@ -9,7 +9,7 @@
 </script>
 
 <QueryClientProvider client={data.queryClient}>
-	<main class="bg-slate-800 w-full h-full text-white p-24">
+	<main class="h-full w-full bg-slate-800 p-24 text-white">
 		<slot />
 	</main>
 	<Toaster />
