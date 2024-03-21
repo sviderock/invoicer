@@ -1,13 +1,17 @@
-<script>
-	import { createConnectTransport } from '@connectrpc/connect-web';
-	import { setContext } from 'svelte';
+<script lang="ts">
+	import { Toaster } from '$lib/components/ui/sonner';
+	import { QueryClientProvider } from '@tanstack/svelte-query';
+	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
 	import '../app.css';
+	import type { LayoutData } from './$types';
 
-	const transport = createConnectTransport({
-		baseUrl: 'http://localhost:9002',
-		useBinaryFormat: true
-	});
-	setContext('transport', transport);
+	export let data: LayoutData;
 </script>
 
-<slot />
+<QueryClientProvider client={data.queryClient}>
+	<main class="bg-slate-800 w-full h-full text-white p-24">
+		<slot />
+	</main>
+	<Toaster />
+	<SvelteQueryDevtools />
+</QueryClientProvider>
