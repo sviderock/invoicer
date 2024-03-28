@@ -23,6 +23,11 @@ export default defineConfig({
 			}
 		}
 	},
+	optimizeDeps: {
+		esbuildOptions: {
+			target: "esnext",
+	},
+	},
 	server: {
 		fs: {
 			allow: [searchForWorkspaceRoot(cwd)]

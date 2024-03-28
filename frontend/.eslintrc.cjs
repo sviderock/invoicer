@@ -5,6 +5,7 @@ module.exports = {
 		'eslint:recommended',
 		'plugin:@typescript-eslint/recommended',
 		'plugin:svelte/recommended',
+		'plugin:@tanstack/eslint-plugin-query/recommended',
 		'prettier'
 	],
 	parser: '@typescript-eslint/parser',
@@ -30,7 +31,8 @@ module.exports = {
 		{
 			files: ['*.svelte', '*.ts', '*.js'],
 			rules: {
-				'@typescript-eslint/no-unused-vars': 'warn'
+				'@typescript-eslint/no-unused-vars': 'warn',
+				'svelte/no-at-html-tags': 'warn'
 			}
 		}
 	]

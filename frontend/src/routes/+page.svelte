@@ -3,88 +3,68 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { PlainMessage } from '@bufbuild/protobuf';
 	import { createMutation, createQuery } from '@tanstack/svelte-query';
-	import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
-	import { GetFilesResponse } from 'proto/file_pb';
+	import { GetTemplatesResponse } from 'proto/template_pb';
 	import { toast } from 'svelte-sonner';
 	import { slide } from 'svelte/transition';
 	import LineMdUploadLoop from '~icons/line-md/upload-loop';
-	import FileForm from './file-form.svelte';
+	import { TemplateCard } from '../lib/components/template-card';
 
-	type FileItem = PlainMessage<GetFilesResponse['files'][number]>;
+	type TemplateItem = PlainMessage<GetTemplatesResponse['templates'][number]>;
 	let { data } = $props();
 	let files = $state<FileList | null>();
-	let newFileUploaded = $state(false);
+	let newTemplateUploaded = $state(false);
 
-	const uploadedFiles = createQuery({
-		queryKey: ['get-files'],
-		queryFn: () => api().getUploadedFiles()
+	const templatesList = createQuery({
+		queryKey: ['get-templates', data.fetch],
+		queryFn: () => api().getTemplates()
 	});
 
 	const createFile = createMutation({
 		mutationKey: ['upload'],
 		mutationFn: api().uploadFile,
 		onMutate: async () => {
-			await data.queryClient.cancelQueries({ queryKey: ['get-files'] });
-			const previousFiles = data.queryClient.getQueryData<FileItem[]>(['get-files']);
+			await data.queryClient.cancelQueries({ queryKey: ['get-templates'] });
+			const previousTemplates = data.queryClient.getQueryData<TemplateItem[]>(['get-templates']);
 			const file = files?.[0];
 
-			if (previousFiles && file) {
-				data.queryClient.setQueryData<FileItem[]>(
-					['get-files'],
+			if (previousTemplates && file) {
+				data.queryClient.setQueryData<TemplateItem[]>(
+					['get-templates'],
 					[
-						...previousFiles,
+						...previousTemplates,
 						{
-							id: 'new-file',
+							id: 0,
 							name: file.name,
 							size: file.size,
 							path: '',
 							thumbnail: '',
-							ext: ''
-						} satisfies FileItem
+							ext: '',
+							createdAt: 0n,
+							updatedAt: 0n
+						} satisfies TemplateItem
 					]
 				);
 			}
 
-			return { previousFiles };
+			return { previousTemplates };
 		},
 		onSuccess: (data) => {
-			toast.success(`Uploaded file: ${data?.name}`);
-			files = null;
-			newFileUploaded = true;
+			toast.success(`Template created: ${data?.name}`);
+			// files = null;
+			newTemplateUploaded = true;
 			setTimeout(() => {
-				newFileUploaded = false;
-			}, 5000);
+				newTemplateUploaded = false;
+			}, 2000);
 		},
 		onError: (_err, _vars, context) => {
-			if (context?.previousFiles) {
-				data.queryClient.setQueryData<FileItem[]>(['get-files'], context.previousFiles);
+			if (context?.previousTemplates) {
+				data.queryClient.setQueryData<TemplateItem[]>(['get-templates'], context.previousTemplates);
 			}
 		},
 		onSettled: () => {
-			data.queryClient.invalidateQueries({ queryKey: ['get-files'] });
+			data.queryClient.invalidateQueries({ queryKey: ['get-templates'] });
 		}
 	});
-
-	async function processPDF(file: File) {
-		const fileArrayBuffer = await file.arrayBuffer();
-		const pdf = await PDFDocument.load(fileArrayBuffer);
-		const helveticaFont = await pdf.embedFont(StandardFonts.Helvetica);
-		const pages = pdf.getPages();
-		const firstPage = pages[0];
-		const { height } = firstPage.getSize();
-		firstPage.drawText('This text was added with JavaScript!', {
-			x: 5,
-			y: height / 2 + 300,
-			size: 50,
-			font: helveticaFont,
-			color: rgb(0.95, 0.1, 0.1),
-			rotate: degrees(-45)
-		});
-
-		const pdfBytes = await pdf.save();
-		const blob = new Blob([pdfBytes]);
-		return blob;
-	}
 
 	function getFormData() {
 		if (!files?.length) return;
@@ -101,11 +81,11 @@
 	}
 
 	const getUploadingStatus = $derived((i: number) => {
-		if (!$uploadedFiles.data) return;
-		if (i !== $uploadedFiles.data?.length - 1) return;
+		if (!$templatesList.data) return;
+		if (i !== $templatesList.data?.length - 1) return;
 
-		if ($uploadedFiles.isPending && !newFileUploaded) return 'uploading';
-		if (newFileUploaded) return 'uploaded';
+		if ($templatesList.isPending && !newTemplateUploaded) return 'uploading';
+		if (newTemplateUploaded) return 'uploaded';
 		return undefined;
 	});
 </script>
@@ -140,9 +120,9 @@
 	<div class="flex w-full flex-col gap-4">
 		<span class="text-xl">Uploaded images</span>
 		<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-			{#if $uploadedFiles.data}
-				{#each $uploadedFiles.data as file, i}
-					<FileForm {file} pending={getUploadingStatus(i)} />
+			{#if $templatesList.data}
+				{#each $templatesList.data as template, i}
+					<TemplateCard {template} pending={getUploadingStatus(i)} />
 				{/each}
 			{/if}
 		</div>

@@ -36,7 +36,7 @@ export const load: LayoutLoad = async () => {
 	});
 
 	const grpcTransport = createConnectTransport({
-		baseUrl: env.PUBLIC_API_URL,
+		baseUrl: env.PUBLIC_API_URL!,
 		useBinaryFormat: true
 	});
 

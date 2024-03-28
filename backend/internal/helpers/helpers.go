@@ -1,10 +1,12 @@
-package main
+package helpers
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"invoice-manager/main/internal/constants"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -18,7 +20,17 @@ func (mr *malformedRequest) Error() string {
 	return mr.msg
 }
 
-func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
+func jsonError(w http.ResponseWriter, err error) {
+	var mr *malformedRequest
+	if errors.As(err, &mr) {
+		http.Error(w, mr.msg, mr.status)
+	} else {
+		log.Print(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	ct := r.Header.Get("Content-Type")
 	if ct != "" {
 		mediaType := strings.ToLower(strings.TrimSpace(strings.Split(ct, ";")[0]))
@@ -83,4 +95,20 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 	}
 
 	return nil
+}
+
+func JsonResponse(w http.ResponseWriter, code int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+}
+
+func ErrorResponse(w http.ResponseWriter, code int, message string, err error) {
+	log.Println(err)
+	JsonResponse(w, code, map[string]string{"error": message})
+}
+
+func PublicUrlToFile(path string) string {
+	return "http://" + constants.HTTP_ADDR + "/" + path
 }

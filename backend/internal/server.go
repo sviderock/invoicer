@@ -2,15 +2,19 @@ package main
 
 import (
 	"fmt"
+	"invoice-manager/main/internal/constants"
+	"invoice-manager/main/internal/ping"
+	"invoice-manager/main/internal/template"
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
-func handleCors(h http.Handler) http.Handler {
+func handleCors() *cors.Cors {
 	return cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:3000",
@@ -21,6 +25,9 @@ func handleCors(h http.Handler) http.Handler {
 		AllowedMethods: []string{
 			"GET",  // for Connect
 			"POST", // for all protocols,
+			"PATCH",
+			"PUT",
+			"DELETE",
 			"OPTIONS",
 		},
 		AllowedHeaders: []string{
@@ -37,27 +44,36 @@ func handleCors(h http.Handler) http.Handler {
 			"Grpc-Status-Details-Bin", // for gRPC-web
 		},
 		MaxAge: 7200, // 2 hours in seconds
-	}).Handler(h)
+	})
+}
+
+type Api struct {
+	TemplatesApi *template.TemplateApi
 }
 
 func main() {
-	mux := http.NewServeMux()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	api := &Api{
+		TemplatesApi: template.NewTemplateApi(),
+	}
+
+	r := mux.NewRouter()
 
 	// gRPC services
-	mux.Handle(PingServiceHandler())
+	r.Handle(ping.PingServiceHandler())
 
 	// Rest API
-	mux.Handle("/"+STATIC_PATH+"/", http.FileServer(http.Dir('.')))
-	mux.HandleFunc("/file-upload", UploadFile)
-	mux.HandleFunc("/get-files", ReadUploadedFiles)
-	mux.HandleFunc("/update-file", UpdateFile)
+	r.PathPrefix("/" + template.STATIC_DIR).Handler(http.FileServer(http.Dir(".")))
+	r.HandleFunc("/templates", api.TemplatesApi.GetTemplatesList).Methods("GET")
+	r.HandleFunc("/templates", api.TemplatesApi.UploadFile).Methods("POST")
+	r.HandleFunc("/templates/{id:[0-9]+}", api.TemplatesApi.UpdateTemplate).Methods("PATCH")
+	r.HandleFunc("/templates/{id:[0-9]+}", api.TemplatesApi.DeleteTemplate).Methods("DELETE")
 
-	handler := h2c.NewHandler(mux, &http2.Server{})
-	handler = handleCors(handler)
+	handler := h2c.NewHandler(r, &http2.Server{})
+	handler = handleCors().Handler(handler)
 
-	httpAddress := "localhost:9002"
-	fmt.Println("HTTP server listening on", httpAddress)
-	err := http.ListenAndServe(httpAddress, handler)
+	fmt.Println("HTTP server listening on", constants.HTTP_ADDR)
+	err := http.ListenAndServe(constants.HTTP_ADDR, handler)
 	if err != nil {
 		log.Fatal("Failed to start a HTTP server:", err)
 	}

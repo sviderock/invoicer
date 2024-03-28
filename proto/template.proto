@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package proto;
+
+message Template {
+  uint32 id = 1;
+  string name = 2;
+  string ext = 3;
+  string path = 4;
+  uint32 size = 5;
+  string thumbnail = 6;
+  int64 createdAt = 7;
+  int64 updatedAt = 8;
+}
+
+message FileUploadResponse {
+  Template template = 1;
+}
+
+message GetTemplatesResponse {
+  repeated Template templates = 1;
+}
+
+message UpdateTemplateRequest {
+  optional string name = 1;
+}
+
+message UpdateTemplateResponse {
+  Template template = 1;
+}

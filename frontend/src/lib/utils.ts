@@ -1,10 +1,8 @@
+import { env } from '$env/dynamic/public';
 import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { cubicOut } from 'svelte/easing';
 import type { TransitionConfig } from 'svelte/transition';
-import { env } from '$env/dynamic/public';
-import { readable, writable } from 'svelte/store';
-import { browser } from '$app/environment';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
