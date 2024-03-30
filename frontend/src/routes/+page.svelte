@@ -16,7 +16,7 @@
 
 	const templatesList = createQuery({
 		queryKey: ['get-templates', data.fetch],
-		queryFn: () => api().getTemplates()
+		queryFn: () => api(data.fetch).getTemplates()
 	});
 
 	const createFile = createMutation({

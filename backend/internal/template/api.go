@@ -141,7 +141,7 @@ func (ta *TemplateApi) UploadFile(w http.ResponseWriter, req *http.Request) {
 	}
 
 	file_ext := filepath.Ext(handler.Filename)
-	new_template, err := ta.templates.Insert(pb.Template{
+	new_template, err := ta.templates.Insert(&pb.Template{
 		Name:      strings.TrimSuffix(handler.Filename, file_ext),
 		Ext:       file_ext,
 		Size:      uint32(handler.Size),
@@ -164,7 +164,7 @@ func (ta *TemplateApi) UploadFile(w http.ResponseWriter, req *http.Request) {
 func (ta *TemplateApi) GetTemplatesList(w http.ResponseWriter, req *http.Request) {
 	templates, err := ta.templates.List()
 	if err != nil {
-		log.Println(err, templates)
+		log.Println(err)
 		helpers.ErrorResponse(w, http.StatusInternalServerError, "Error reading files", err)
 		return
 	}
@@ -174,7 +174,6 @@ func (ta *TemplateApi) GetTemplatesList(w http.ResponseWriter, req *http.Request
 		data = append(data, *template.data)
 	}
 
-	log.Print(templates)
 	helpers.JsonResponse(w, http.StatusOK, data)
 }
 
@@ -183,24 +182,24 @@ func (ta *TemplateApi) UpdateTemplate(w http.ResponseWriter, req *http.Request) 
 	vars := mux.Vars(req)
 	_ = json.NewDecoder(req.Body).Decode(&body)
 	id, err := strconv.Atoi(vars["id"])
+
 	if err != nil {
 		helpers.ErrorResponse(w, http.StatusBadRequest, "Invalid file ID", err)
 		return
 	}
 
-	if *body.Name == "" {
+	if body.GetName() == "" {
 		helpers.ErrorResponse(w, http.StatusBadRequest, "Name field is empty", err)
 		return
 	}
 
-	template, err := ta.templates.Retrieve(id)
+	updated_template, err := ta.templates.UpdateName(id, body.GetName())
 	if err != nil {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Template not found", err)
+		helpers.ErrorResponse(w, http.StatusBadRequest, "Template couldn't be updated", err)
 		return
 	}
 
-	template.UpdateName(*body.Name, ta.templates.db)
-	helpers.JsonResponse(w, http.StatusOK, &template.data)
+	helpers.JsonResponse(w, http.StatusOK, &updated_template)
 }
 
 func (ta *TemplateApi) DeleteTemplate(w http.ResponseWriter, req *http.Request) {

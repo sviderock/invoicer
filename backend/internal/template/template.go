@@ -31,28 +31,28 @@ func (t *Template) GetOSPath() string {
 	return filepath.Join(path_split...)
 }
 
-func (t *Template) UpdateName(name string, db *sql.DB) error {
+func (t *Template) UpdateName(name string, db *sql.DB) (*Template, error) {
 	stmt, err := db.Prepare("UPDATE templates SET name = ? WHERE id = ?")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = stmt.Exec(name, t.data.Id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	t.data.Name = name
-	return nil
+	return nil, nil
 }
 
 type Templates struct {
 	db *sql.DB
 
-	insert_stmt, retrieve_stmt, list_stmt, delete_stmt *sql.Stmt
+	insert_stmt, retrieve_stmt, list_stmt, delete_stmt, update_name_stmt *sql.Stmt
 }
 
-func (ts *Templates) Insert(template pb.Template) (*Template, error) {
+func (ts *Templates) Insert(template *pb.Template) (*Template, error) {
 	res, err := ts.insert_stmt.Exec(
 		template.Name,
 		template.Ext,
@@ -121,11 +121,9 @@ func (ts *Templates) List() ([]Template, error) {
 		)
 		if err != nil {
 			log.Println(err)
-
 			return nil, err
 		}
 
-		log.Println(i)
 		data = append(data, Template{data: &i})
 	}
 
@@ -139,6 +137,20 @@ func (ts *Templates) Delete(id int) error {
 	}
 
 	return nil
+}
+
+func (ts *Templates) UpdateName(id int, new_name string) (*Template, error) {
+	_, err := ts.update_name_stmt.Exec(new_name, id)
+	if err != nil {
+		return nil, err
+	}
+
+	updated_template, err := ts.Retrieve(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &updated_template, nil
 }
 
 func NewTemplates() (*Templates, error) {
@@ -196,11 +208,19 @@ func NewTemplates() (*Templates, error) {
 		return nil, err
 	}
 
+	update_name_stmt, err := db.Prepare(
+		"UPDATE templates SET template_name = ? WHERE template_id = ?",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Templates{
-		db:            db,
-		insert_stmt:   insert_stmt,
-		retrieve_stmt: retrieve_stmt,
-		delete_stmt:   delete_stmt,
-		list_stmt:     list_stmt,
+		db:               db,
+		insert_stmt:      insert_stmt,
+		retrieve_stmt:    retrieve_stmt,
+		delete_stmt:      delete_stmt,
+		list_stmt:        list_stmt,
+		update_name_stmt: update_name_stmt,
 	}, nil
 }

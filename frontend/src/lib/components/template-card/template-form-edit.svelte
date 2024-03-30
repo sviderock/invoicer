@@ -49,7 +49,6 @@
 				}
 			});
 			const sanitized = DOMPurify.sanitize(text, { WHOLE_DOCUMENT: true, FORCE_BODY: true });
-
 			return { sanitized };
 		}
 	});

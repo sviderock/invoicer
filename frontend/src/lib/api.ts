@@ -1,9 +1,9 @@
 import { env } from '$env/dynamic/public';
 import type { PlainMessage } from '@bufbuild/protobuf';
 import {
-	Template,
 	FileUploadResponse,
 	GetTemplatesResponse,
+	Template,
 	UpdateTemplateRequest,
 	UpdateTemplateResponse
 } from 'proto/template_pb';

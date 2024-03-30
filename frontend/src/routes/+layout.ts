@@ -19,12 +19,6 @@ export const load: LayoutLoad = async () => {
 			queries: {
 				enabled: browser,
 				staleTime: 60 * 1000,
-				queryFn: async ({ queryKey }) => {
-					const path = getPath(queryKey);
-					const data = await fetch(`${env.PUBLIC_API_URL}/${path}`, { method: 'GET' });
-					const json = await data.json();
-					return json;
-				}
 			}
 		},
 		queryCache: new QueryCache({

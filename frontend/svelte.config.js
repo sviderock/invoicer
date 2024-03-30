@@ -13,7 +13,6 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			'proto/*': './proto/*',
-			'components/*': './src/components/*'
 		}
 	}
 };
