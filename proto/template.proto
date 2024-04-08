@@ -28,3 +28,7 @@ message UpdateTemplateRequest {
 message UpdateTemplateResponse {
   Template template = 1;
 }
+
+message UpdateTemplateHtmlRequest {
+  optional string html = 1;
+}

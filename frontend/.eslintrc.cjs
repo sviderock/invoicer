@@ -32,7 +32,8 @@ module.exports = {
 			files: ['*.svelte', '*.ts', '*.js'],
 			rules: {
 				'@typescript-eslint/no-unused-vars': 'warn',
-				'svelte/no-at-html-tags': 'warn'
+				'svelte/no-at-html-tags': 'warn',
+				'prefer-const': 'off'
 			}
 		}
 	]

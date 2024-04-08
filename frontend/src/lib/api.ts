@@ -46,7 +46,16 @@ export const api = (customFetch = fetch) => ({
 	},
 
 	getHtml: async (url: string) => {
-		const res = await customFetch(url);
+		const res = await customFetch(url, { cache: 'no-cache' });
+		const text = await res.text();
+		return text;
+	},
+
+	updateTemplateHtml: async ({ id, html }: Pick<Template, 'id'> & { html: string }) => {
+		const res = await customFetch(`${env.PUBLIC_API_URL}/templates/${id}/html`, {
+			method: 'PUT',
+			body: html
+		});
 		const text = await res.text();
 		return text;
 	}

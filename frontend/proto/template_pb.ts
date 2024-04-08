@@ -233,3 +233,40 @@ export class UpdateTemplateResponse extends Message<UpdateTemplateResponse> {
   }
 }
 
+/**
+ * @generated from message proto.UpdateTemplateHtmlRequest
+ */
+export class UpdateTemplateHtmlRequest extends Message<UpdateTemplateHtmlRequest> {
+  /**
+   * @generated from field: optional string html = 1;
+   */
+  html?: string;
+
+  constructor(data?: PartialMessage<UpdateTemplateHtmlRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "proto.UpdateTemplateHtmlRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "html", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateTemplateHtmlRequest {
+    return new UpdateTemplateHtmlRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateTemplateHtmlRequest {
+    return new UpdateTemplateHtmlRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateTemplateHtmlRequest {
+    return new UpdateTemplateHtmlRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateTemplateHtmlRequest | PlainMessage<UpdateTemplateHtmlRequest> | undefined, b: UpdateTemplateHtmlRequest | PlainMessage<UpdateTemplateHtmlRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateTemplateHtmlRequest, a, b);
+  }
+}
+

@@ -19,6 +19,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/h2non/bimg"
+	"golang.org/x/net/html"
 )
 
 type TemplateApi struct {
@@ -87,7 +88,7 @@ func ConvertPdfToHtml(temp_file *os.File) (template_path string, err error) {
 	template_name := fmt.Sprint(time.Now().UnixNano()) + ".html"
 	image := "pdf2htmlex/pdf2htmlex:0.18.8.rc2-master-20200820-alpine-3.12.0-x86_64"
 	cmd := fmt.Sprintf(
-		"docker run -t --rm -v %s:/backend -w /backend %s --zoom 1.3 --embed CFIJO --dest-dir %s %s %s",
+		"docker run -t --rm -v %s:/backend -w /backend %s --zoom 1.8 --embed CFIJO --dest-dir %s %s %s --process-outline 0 --optimize-text 1",
 		cwd_root,
 		image,
 		HTML_TEMPLATES_DIR,
@@ -108,36 +109,26 @@ func (ta *TemplateApi) UploadFile(w http.ResponseWriter, req *http.Request) {
 	req.ParseMultipartForm(10 << 20) // 10mb
 	form_file, handler, err := req.FormFile("file")
 	if err != nil {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Couldn't get req.FormFile(\"file\")", err)
-		return
+		fmt.Fprint(w, "Couldn't get req.FormFile(\"file\")")
 	}
 	defer form_file.Close()
 
 	temp_file, err := UploadToTempFile(form_file, handler)
 	if err != nil {
 		log.Println(err)
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Count't create temp file", err)
-		return
+		fmt.Fprint(w, "Count't create temp file")
 	}
 	defer os.Remove(temp_file.Name())
 	defer temp_file.Close()
 
 	thumbnail_path, err := CreateThumbnail(temp_file)
 	if err != nil {
-		helpers.ErrorResponse(w, http.StatusInternalServerError, "Error creating thumbnail", err)
-		return
+		fmt.Fprint(w, "Error creating thumbnail")
 	}
 
 	template_path, err := ConvertPdfToHtml(temp_file)
 	if err != nil {
-		log.Println(err)
-		helpers.ErrorResponse(
-			w,
-			http.StatusInternalServerError,
-			"Error converting PDF to HTML",
-			err,
-		)
-		return
+		fmt.Fprint(w, "Error converting PDF to HTML")
 	}
 
 	file_ext := filepath.Ext(handler.Filename)
@@ -145,17 +136,11 @@ func (ta *TemplateApi) UploadFile(w http.ResponseWriter, req *http.Request) {
 		Name:      strings.TrimSuffix(handler.Filename, file_ext),
 		Ext:       file_ext,
 		Size:      uint32(handler.Size),
-		Path:      helpers.PublicUrlToFile(template_path),
-		Thumbnail: helpers.PublicUrlToFile(thumbnail_path),
+		Path:      template_path,
+		Thumbnail: thumbnail_path,
 	})
 	if err != nil {
-		helpers.ErrorResponse(
-			w,
-			http.StatusInternalServerError,
-			"Error inserting new template into the database",
-			err,
-		)
-		return
+		fmt.Fprint(w, "Error inserting new template into the database")
 	}
 
 	helpers.JsonResponse(w, http.StatusOK, pb.FileUploadResponse{Template: new_template.data})
@@ -164,74 +149,94 @@ func (ta *TemplateApi) UploadFile(w http.ResponseWriter, req *http.Request) {
 func (ta *TemplateApi) GetTemplatesList(w http.ResponseWriter, req *http.Request) {
 	templates, err := ta.templates.List()
 	if err != nil {
-		log.Println(err)
-		helpers.ErrorResponse(w, http.StatusInternalServerError, "Error reading files", err)
-		return
+		fmt.Fprint(w, "Error reading files")
 	}
 
 	var data []pb.Template
 	for _, template := range templates {
-		data = append(data, *template.data)
+		data = append(data, pb.Template{
+			Id:        template.data.Id,
+			Name:      template.data.Name,
+			Ext:       template.data.Ext,
+			Size:      template.data.Size,
+			CreatedAt: template.data.CreatedAt,
+			UpdatedAt: template.data.UpdatedAt,
+			Path:      template.public_path,
+			Thumbnail: template.public_thumbnail_path,
+		})
 	}
 
 	helpers.JsonResponse(w, http.StatusOK, data)
 }
 
+func GetId(w http.ResponseWriter, req *http.Request) int {
+	vars := mux.Vars(req)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		fmt.Fprint(w, "Invalid template ID")
+	}
+	return id
+}
+
 func (ta *TemplateApi) UpdateTemplate(w http.ResponseWriter, req *http.Request) {
 	var body pb.UpdateTemplateRequest
-	vars := mux.Vars(req)
-	_ = json.NewDecoder(req.Body).Decode(&body)
-	id, err := strconv.Atoi(vars["id"])
-
-	if err != nil {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Invalid file ID", err)
-		return
-	}
+	err := json.NewDecoder(req.Body).Decode(&body)
+	id := GetId(w, req)
 
 	if body.GetName() == "" {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Name field is empty", err)
-		return
+		fmt.Fprintf(w, "Name field is empty")
 	}
 
 	updated_template, err := ta.templates.UpdateName(id, body.GetName())
 	if err != nil {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Template couldn't be updated", err)
-		return
+		fmt.Fprint(w, "Template couldn't be updated")
 	}
 
 	helpers.JsonResponse(w, http.StatusOK, &updated_template)
 }
 
-func (ta *TemplateApi) DeleteTemplate(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	id, err := strconv.Atoi(vars["id"])
+func (ta *TemplateApi) UpdateTemplateHtml(w http.ResponseWriter, req *http.Request) {
+	req.Header.Set("Accept", "text/html; charset=utf-8")
+	b, err := io.ReadAll(req.Body)
+	html_string := string(b)
 	if err != nil {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Invalid template ID", err)
-		return
+		fmt.Fprint(w, "Error reading HTML from request")
 	}
 
-	if err = ta.templates.Delete(id); err != nil {
-		helpers.ErrorResponse(w, http.StatusBadRequest, "Error while deleting the template", err)
-		return
+	if _, err := html.Parse(strings.NewReader(html_string)); err != nil {
+		fmt.Fprint(w, "HTML seems to be invalid")
 	}
 
-	w.WriteHeader(http.StatusOK)
+	id := GetId(w, req)
+	template, err := ta.templates.Retrieve(id)
+	if err != nil {
+		fmt.Fprint(w, "Coudln't retrieve template")
+	}
+
+	if err := os.WriteFile(template.data.Path, []byte(html_string), 0660); err != nil {
+		fmt.Fprint(w, "Coudln't write into HTML file")
+	}
+}
+
+func (ta *TemplateApi) DeleteTemplate(w http.ResponseWriter, req *http.Request) {
+	id := GetId(w, req)
+	if err := ta.templates.Delete(id); err != nil {
+		fmt.Fprint(w, "Error while deleting the template")
+	}
 }
 
 func NewTemplateApi() *TemplateApi {
-	err := os.MkdirAll(HTML_TEMPLATES_DIR, os.ModePerm)
-	if err != nil {
-		log.Fatal("Error creating HTML templates directory", err)
+	if err := os.MkdirAll(HTML_TEMPLATES_DIR, os.ModePerm); err != nil {
+		fmt.Print("Error creating HTML templates directory")
 	}
 
-	err = os.MkdirAll(THUMBNAILS_DIR, os.ModePerm)
-	if err != nil {
-		log.Fatal("Error creating thumbnails directory", err)
+	if err := os.MkdirAll(THUMBNAILS_DIR, os.ModePerm); err != nil {
+		fmt.Print("Error creating thumbnails directory")
 	}
 
 	ts, err := NewTemplates()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Print(err)
 	}
 
 	return &TemplateApi{templates: ts}

@@ -14,8 +14,9 @@
 	let files = $state<FileList | null>();
 	let newTemplateUploaded = $state(false);
 
+	const listQueryKey = ['get-templates', data.fetch];
 	const templatesList = createQuery({
-		queryKey: ['get-templates', data.fetch],
+		queryKey: listQueryKey,
 		queryFn: () => api(data.fetch).getTemplates()
 	});
 
@@ -23,27 +24,24 @@
 		mutationKey: ['upload'],
 		mutationFn: api().uploadFile,
 		onMutate: async () => {
-			await data.queryClient.cancelQueries({ queryKey: ['get-templates'] });
-			const previousTemplates = data.queryClient.getQueryData<TemplateItem[]>(['get-templates']);
+			await data.queryClient.cancelQueries({ queryKey: listQueryKey });
+			const previousTemplates = data.queryClient.getQueryData<TemplateItem[]>(listQueryKey);
 			const file = files?.[0];
 
-			if (previousTemplates && file) {
-				data.queryClient.setQueryData<TemplateItem[]>(
-					['get-templates'],
-					[
-						...previousTemplates,
-						{
-							id: 0,
-							name: file.name,
-							size: file.size,
-							path: '',
-							thumbnail: '',
-							ext: '',
-							createdAt: 0n,
-							updatedAt: 0n
-						} satisfies TemplateItem
-					]
-				);
+			if (file) {
+				data.queryClient.setQueryData<TemplateItem[]>(listQueryKey, [
+					...(previousTemplates || []),
+					{
+						id: 0,
+						name: file.name,
+						size: file.size,
+						path: '',
+						thumbnail: '',
+						ext: '',
+						createdAt: 0n,
+						updatedAt: 0n
+					} satisfies TemplateItem
+				]);
 			}
 
 			return { previousTemplates };
@@ -58,11 +56,11 @@
 		},
 		onError: (_err, _vars, context) => {
 			if (context?.previousTemplates) {
-				data.queryClient.setQueryData<TemplateItem[]>(['get-templates'], context.previousTemplates);
+				data.queryClient.setQueryData<TemplateItem[]>(listQueryKey, context.previousTemplates);
 			}
 		},
 		onSettled: () => {
-			data.queryClient.invalidateQueries({ queryKey: ['get-templates'] });
+			data.queryClient.invalidateQueries({ queryKey: listQueryKey });
 		}
 	});
 
@@ -84,13 +82,13 @@
 		if (!$templatesList.data) return;
 		if (i !== $templatesList.data?.length - 1) return;
 
-		if ($templatesList.isPending && !newTemplateUploaded) return 'uploading';
+		if ($createFile.isPending && !newTemplateUploaded) return 'uploading';
 		if (newTemplateUploaded) return 'uploaded';
 		return undefined;
 	});
 </script>
 
-<div class="flex w-full flex-col items-start justify-start gap-12 rounded-sm border-2 p-16">
+<div class="flex w-full flex-col items-start justify-start gap-12 p-16">
 	<div class="flex flex-col gap-4">
 		<label for="file-upload">Upload PDF file:</label>
 		<div class="flex items-center justify-between gap-4">

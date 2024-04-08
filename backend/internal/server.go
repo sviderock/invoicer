@@ -68,6 +68,7 @@ func main() {
 	r.HandleFunc("/templates", api.TemplatesApi.UploadFile).Methods("POST")
 	r.HandleFunc("/templates/{id:[0-9]+}", api.TemplatesApi.UpdateTemplate).Methods("PATCH")
 	r.HandleFunc("/templates/{id:[0-9]+}", api.TemplatesApi.DeleteTemplate).Methods("DELETE")
+	r.HandleFunc("/templates/{id:[0-9]+}/html", api.TemplatesApi.UpdateTemplateHtml).Methods("PUT")
 
 	handler := h2c.NewHandler(r, &http2.Server{})
 	handler = handleCors().Handler(handler)

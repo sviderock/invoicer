@@ -25,12 +25,15 @@ export default defineConfig({
 	},
 	optimizeDeps: {
 		esbuildOptions: {
-			target: "esnext",
-	},
+			target: 'esnext'
+		}
 	},
 	server: {
 		fs: {
 			allow: [searchForWorkspaceRoot(cwd)]
 		}
+	},
+	ssr: {
+		noExternal: [/^(lexical|@lexical\/.*)$/]
 	}
 });

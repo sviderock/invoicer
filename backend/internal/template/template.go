@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"invoice-manager/main/internal/constants"
+	"invoice-manager/main/internal/helpers"
 	pb "invoice-manager/main/proto"
 	"log"
-	"path/filepath"
-	"strings"
+	"os"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -18,32 +18,17 @@ var (
 )
 
 type Template struct {
-	data *pb.Template
+	data                  *pb.Template
+	public_path           string
+	public_thumbnail_path string
 }
 
-func (t *Template) GetFileDirPath() string {
-	path_split := strings.Split(t.data.Path, "/")
-	return filepath.Join(path_split[:len(path_split)-1]...)
+func (t *Template) GetPublicTemplatePath() string {
+	return helpers.PublicUrlToFile(t.data.Path)
 }
 
-func (t *Template) GetOSPath() string {
-	path_split := strings.Split(t.data.Path, "/")
-	return filepath.Join(path_split...)
-}
-
-func (t *Template) UpdateName(name string, db *sql.DB) (*Template, error) {
-	stmt, err := db.Prepare("UPDATE templates SET name = ? WHERE id = ?")
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = stmt.Exec(name, t.data.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	t.data.Name = name
-	return nil, nil
+func (t *Template) GetPublicThumbnailPath() string {
+	return helpers.PublicUrlToFile(t.data.Thumbnail)
 }
 
 type Templates struct {
@@ -56,9 +41,11 @@ func (ts *Templates) Insert(template *pb.Template) (*Template, error) {
 	res, err := ts.insert_stmt.Exec(
 		template.Name,
 		template.Ext,
-		template.Path,
 		template.Size,
+		template.Path,
+		helpers.PublicUrlToFile(template.Path),
 		template.Thumbnail,
+		helpers.PublicUrlToFile(template.Thumbnail),
 		time.Now().Unix(),
 		time.Now().Unix(),
 	)
@@ -81,22 +68,24 @@ func (ts *Templates) Insert(template *pb.Template) (*Template, error) {
 
 func (ts *Templates) Retrieve(id int) (Template, error) {
 	row := ts.retrieve_stmt.QueryRow(id)
-	data := pb.Template{}
+	template := Template{data: &pb.Template{}}
 	err := row.Scan(
-		&data.Id,
-		&data.Name,
-		&data.Ext,
-		&data.Path,
-		&data.Size,
-		&data.Thumbnail,
-		&data.CreatedAt,
-		&data.UpdatedAt,
+		&template.data.Id,
+		&template.data.Name,
+		&template.data.Ext,
+		&template.data.Size,
+		&template.data.Path,
+		&template.public_path,
+		&template.data.Thumbnail,
+		&template.public_thumbnail_path,
+		&template.data.CreatedAt,
+		&template.data.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
-		return Template{}, ErrIDNotFound
+		return template, ErrIDNotFound
 	}
 
-	return Template{data: &data}, err
+	return template, err
 }
 
 func (ts *Templates) List() ([]Template, error) {
@@ -108,30 +97,47 @@ func (ts *Templates) List() ([]Template, error) {
 
 	data := []Template{}
 	for rows.Next() {
-		i := pb.Template{}
+		row := Template{data: &pb.Template{}}
 		err = rows.Scan(
-			&i.Id,
-			&i.Name,
-			&i.Ext,
-			&i.Path,
-			&i.Size,
-			&i.Thumbnail,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&row.data.Id,
+			&row.data.Name,
+			&row.data.Ext,
+			&row.data.Size,
+			&row.data.Path,
+			&row.public_path,
+			&row.data.Thumbnail,
+			&row.public_thumbnail_path,
+			&row.data.CreatedAt,
+			&row.data.UpdatedAt,
 		)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
 
-		data = append(data, Template{data: &i})
+		data = append(data, row)
 	}
 
 	return data, nil
 }
 
 func (ts *Templates) Delete(id int) error {
-	_, err := ts.delete_stmt.Exec(id)
+	template, err := ts.Retrieve(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = ts.delete_stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	err = os.Remove(template.data.Path)
+	if err != nil {
+		return err
+	}
+
+	err = os.Remove(template.data.Thumbnail)
 	if err != nil {
 		return err
 	}
@@ -164,9 +170,11 @@ func NewTemplates() (*Templates, error) {
 			template_id INTEGER NOT NULL PRIMARY KEY,
 			template_name VARCHAR NOT NULL,
 			template_ext VARCHAR(10) NOT NULL,
-			template_path TEXT NOT NULL,
 			template_size INTEGER NOT NULL,
-			template_thumbnail_path TEXT NOT NULL,
+			template_private_path TEXT NOT NULL,
+			template_public_path TEXT NOT NULL,
+			template_private_thumbnail_path TEXT NOT NULL,
+			template_public_thumbnail_path TEXT NOT NULL,
 			template_created_at INTEGER NOT NULL,
 			template_updated_at INTEGER NOT NULL
 		);
@@ -176,7 +184,7 @@ func NewTemplates() (*Templates, error) {
 		return nil, err
 	}
 
-	insert_stmt, err := db.Prepare("INSERT INTO templates VALUES(NULL, ?, ?, ?, ?, ?, ?, ?)")
+	insert_stmt, err := db.Prepare("INSERT INTO templates VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -186,13 +194,16 @@ func NewTemplates() (*Templates, error) {
 			template_id,
 			template_name,
 			template_ext,
-			template_path,
 			template_size,
-			template_thumbnail_path,
+			template_private_path,
+			template_public_path,
+			template_private_thumbnail_path,
+			template_public_thumbnail_path,
 			template_created_at,
 			template_updated_at
 		FROM templates
-		WHERE template_id = ?;
+		WHERE template_id = ?
+		ORDER BY template_created_at ASC;
 	`)
 	if err != nil {
 		return nil, err
@@ -203,7 +214,7 @@ func NewTemplates() (*Templates, error) {
 		return nil, err
 	}
 
-	list_stmt, err := db.Prepare("SELECT * FROM templates ORDER BY template_id DESC")
+	list_stmt, err := db.Prepare("SELECT * FROM templates ORDER BY template_created_at ASC")
 	if err != nil {
 		return nil, err
 	}
