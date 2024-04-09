@@ -1,13 +1,19 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { api } from '$lib/api';
 	import {
 		EDIT_ACTIVE_CLASS,
-		EDITABLE_CLASS,
+		FieldSchema,
 		initiallySanitizeHtml
 	} from '$lib/components/template-card/utils';
 	import { Button } from '$lib/components/ui/button';
-	import { FormButton, FormControl, FormField } from '$lib/components/ui/form';
+	import {
+		FormButton,
+		FormControl,
+		FormField,
+		FormFieldset,
+		FormLabel,
+		FormLegend
+	} from '$lib/components/ui/form';
 	import { Label } from '$lib/components/ui/label';
 	import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -20,8 +26,9 @@
 	import type { Template } from 'proto/template_pb';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import { defaults, superForm } from 'sveltekit-superforms';
+	import SuperDebug, { defaults, superForm } from 'sveltekit-superforms';
 	import { valibot } from 'sveltekit-superforms/adapters';
+	import MingcuteDelete2Line from '~icons/mingcute/delete-2-line';
 	import * as v from 'valibot';
 
 	type Props = {
@@ -32,14 +39,7 @@
 		editingField: v.object({
 			innerHtml: v.string()
 		}),
-		fields: v.array(
-			v.object({
-				id: v.number(),
-				x: v.number(),
-				y: v.number(),
-				name: v.string([v.minLength(1)])
-			})
-		)
+		fields: v.array(FieldSchema)
 	});
 	const valibotSchema = valibot(Schema);
 
@@ -48,6 +48,7 @@
 	let sheetOpen = $state(true);
 	let editingRef = $state<HTMLElement | null>(null);
 	let containerRef = $state<HTMLElement | null>(null);
+	let fieldRefs = $state<Record<FieldSchema['id'], HTMLElement | undefined>>({});
 
 	const updateTemplateHtml = createMutation({
 		mutationKey: ['update-template-html'],
@@ -80,7 +81,20 @@
 		select: initiallySanitizeHtml
 	});
 
-	onMount(() => {
+	$effect(() => {
+		if (!$htmlTemplate.data) return;
+		$formData.fields = $htmlTemplate.data.fields;
+	});
+
+	$effect(() => {
+		console.log(123);
+		if (!containerRef) return;
+		const all = containerRef.querySelectorAll('*[data-field-id]');
+		all.forEach((el) => {
+			if (!(el instanceof HTMLElement)) return;
+			fieldRefs[el.dataset.fieldId!] = el;
+		});
+
 		function onFocus(e: FocusEvent) {
 			if (!(e.target instanceof HTMLElement)) return;
 
@@ -92,17 +106,24 @@
 			editingRef = e.target;
 			editingRef.classList.add(EDIT_ACTIVE_CLASS);
 			editingRef.contentEditable = 'true';
-			editingRef.addEventListener('input', (e) => {
-				e.stopPropagation();
-				if (e.target instanceof HTMLElement) {
-					$formData.editingField.innerHtml = e.target.innerHTML;
-				}
-			});
 			$formData.editingField.innerHtml = editingRef.innerHTML;
 		}
 
+		function onFocusOut(e: FocusEvent) {
+			if (!(e.target instanceof HTMLElement)) return;
+			if (editingRef) {
+				editingRef.classList.remove(EDIT_ACTIVE_CLASS);
+				editingRef.contentEditable = 'false';
+			}
+		}
+
 		containerRef?.addEventListener('focus', onFocus, true);
-		return () => containerRef?.removeEventListener('focus', onFocus, true);
+		containerRef?.addEventListener('focusout', onFocusOut, true);
+
+		return () => {
+			containerRef?.removeEventListener('focus', onFocus, true);
+			containerRef?.removeEventListener('focusout', onFocusOut, true);
+		};
 	});
 
 	$effect(() => {
@@ -116,6 +137,30 @@
 		editingRef?.addEventListener('input', onInput);
 		return () => editingRef?.removeEventListener('input', onInput);
 	});
+
+	function addField() {
+		if (!editingRef) return;
+
+		if (!editingRef.dataset.fieldId) {
+			const newField = {
+				id: nanoid(),
+				name: `Field #${$formData.fields.length + 1}`
+			} satisfies FieldSchema;
+			$formData.fields = [...$formData.fields, newField];
+
+			editingRef.dataset.fieldId = newField.id;
+			editingRef.dataset.fieldName = newField.name;
+		}
+	}
+
+	function deleteField(i: number) {
+		const ref = fieldRefs[$formData.fields[i].id]!;
+		delete ref.dataset.fieldId;
+		delete ref.dataset.fieldName;
+		$formData.fields = $formData.fields.filter((_, idx) => idx !== i);
+	}
+
+	function focusField(field: HTMLElement) {}
 </script>
 
 <Sheet closeOnOutsideClick={false} bind:open={sheetOpen}>
@@ -135,10 +180,12 @@
 	<SheetContent class="flex w-full p-0 px-8 pt-8 sm:max-w-[unset]">
 		<div class="flex w-full gap-4">
 			{#if $htmlTemplate.data}
+				<!-- For those weird ${''} pieces: https://github.com/sveltejs/svelte/issues/5292#issuecomment-787743573 -->
 				{@html `<${''}style>${$htmlTemplate.data.styles}</${''}style>`}
 			{/if}
 
-			<div class="h-min flex-1 rounded-sm border p-8">
+			<div class="h-min flex-[0.5] rounded-sm border p-8">
+				<SuperDebug data={$formData} />
 				<form method="post" use:enhance class="flex flex-col gap-4">
 					<FormField {form} name="editingField.innerHtml" class="w-full">
 						<FormControl let:attrs>
@@ -154,16 +201,40 @@
 						</FormControl>
 					</FormField>
 
+					<FormFieldset {form} name="fields" class="w-full">
+						<FormLegend>Fields</FormLegend>
+						<Button on:click={addField} disabled={!editingRef}>Turn into field</Button>
+						{#each $formData.fields as _, i}
+							<FormField
+								{form}
+								name="fields[{i}]"
+								class="flex items-center justify-between gap-2 border border-slate-500 p-2"
+							>
+								<FormControl let:attrs>
+									<FormLabel>{$formData.fields[i].name}</FormLabel>
+									<span
+										role="presentation"
+										on:click={() => fieldRefs[$formData.fields[i].id]!.focus()}
+									>
+										{$formData.fields[i].id}
+									</span>
+									<Button variant="destructive" size="icon" on:click={() => deleteField(i)}>
+										<MingcuteDelete2Line class="text-xs" />
+									</Button>
+								</FormControl>
+							</FormField>
+						{/each}
+					</FormFieldset>
+
 					<FormButton>Submit</FormButton>
 				</form>
 			</div>
-			<div bind:this={containerRef} class="relative h-full w-full flex-1 overflow-auto">
-				{#if $htmlTemplate.data}
-					<!-- For those weird ${''} pieces: https://github.com/sveltejs/svelte/issues/5292#issuecomment-787743573 -->
-					{@html `<${''}style>${$htmlTemplate.data.styles}</${''}style>`}
+
+			{#if $htmlTemplate.data}
+				<div bind:this={containerRef} class="relative h-full w-full flex-1 overflow-auto">
 					{@html $htmlTemplate.data.sanitizedHtml}
-				{/if}
-			</div>
+				</div>
+			{/if}
 		</div>
 	</SheetContent>
 </Sheet>

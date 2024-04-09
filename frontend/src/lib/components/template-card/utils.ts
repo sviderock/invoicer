@@ -1,10 +1,18 @@
 import DOMPurify from 'dompurify';
+import * as v from 'valibot';
+
+export type FieldSchema = v.Output<typeof FieldSchema>;
+export const FieldSchema = v.object({
+	id: v.string(),
+	name: v.string([v.minLength(1)])
+});
 
 export const EDITABLE_CLASS = 'editable';
 export const EDIT_ACTIVE_CLASS = 'edit-active';
 
 export function initiallySanitizeHtml(text: string) {
 	let styles = '';
+	let fields: FieldSchema[] = [];
 	let classes = new Set<string>();
 	DOMPurify.addHook('uponSanitizeElement', (node, data) => {
 		if (data.tagName === 'style') {
@@ -43,6 +51,13 @@ export function initiallySanitizeHtml(text: string) {
 		if (node.classList?.length) {
 			node.classList.forEach((i) => classes.add(i));
 		}
+
+		if (node instanceof HTMLElement && node.dataset.fieldId) {
+			fields.push({
+				id: node.dataset.fieldId,
+				name: node.dataset.fieldName || ''
+			});
+		}
 	});
 
 	const sanitizedHtml = DOMPurify.sanitize(text, {
@@ -53,5 +68,5 @@ export function initiallySanitizeHtml(text: string) {
 
 	DOMPurify.removeAllHooks();
 
-	return { sanitizedHtml, styles, classes };
+	return { sanitizedHtml, styles, classes, fields };
 }
