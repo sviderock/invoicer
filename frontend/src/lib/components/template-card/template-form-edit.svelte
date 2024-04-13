@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { api } from '$lib/api';
 	import {
+		EDITABLE_CLASS,
 		EDIT_ACTIVE_CLASS,
 		FieldSchema,
+		IncrementField,
 		initiallySanitizeHtml
 	} from '$lib/components/template-card/utils';
 	import { Button } from '$lib/components/ui/button';
@@ -16,7 +18,7 @@
 	} from '$lib/components/ui/form';
 	import { Label } from '$lib/components/ui/label';
 	import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
-	import { Textarea } from '$lib/components/ui/textarea';
+	import { Textarea, type FormTextareaEvent } from '$lib/components/ui/textarea';
 	import type { PlainMessage } from '@bufbuild/protobuf';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import DOMPurify from 'dompurify';
@@ -37,7 +39,8 @@
 
 	const Schema = v.object({
 		editingField: v.object({
-			innerHtml: v.string()
+			originalText: v.string(),
+			innerText: v.string()
 		}),
 		fields: v.array(FieldSchema)
 	});
@@ -60,7 +63,9 @@
 	});
 
 	const form = superForm(
-		defaults(valibotSchema, { defaults: { fields: [], editingField: { innerHtml: '' } } }),
+		defaults(valibotSchema, {
+			defaults: { fields: [], editingField: { originalText: '', innerText: '' } }
+		}),
 		{
 			id: nanoid(),
 			SPA: true,
@@ -68,7 +73,8 @@
 			validators: valibotSchema,
 			resetForm: false,
 			onSubmit: () => {
-				const body = DOMPurify.sanitize(containerRef!.innerHTML, { FORCE_BODY: true });
+				const htmlContent = [$htmlTemplate.data!.styles, containerRef!.innerHTML.trim()].join('');
+				const body = DOMPurify.sanitize(htmlContent, { FORCE_BODY: true });
 				$updateTemplateHtml.mutate({ id: template.id, html: body });
 			}
 		}
@@ -87,7 +93,11 @@
 	});
 
 	$effect(() => {
-		console.log(123);
+		if (!editingRef) return;
+		editingRef.innerText = $formData.editingField.innerText;
+	});
+
+	$effect(() => {
 		if (!containerRef) return;
 		const all = containerRef.querySelectorAll('*[data-field-id]');
 		all.forEach((el) => {
@@ -96,6 +106,7 @@
 		});
 
 		function onFocus(e: FocusEvent) {
+			console.log('focus');
 			if (!(e.target instanceof HTMLElement)) return;
 
 			if (editingRef) {
@@ -106,7 +117,8 @@
 			editingRef = e.target;
 			editingRef.classList.add(EDIT_ACTIVE_CLASS);
 			editingRef.contentEditable = 'true';
-			$formData.editingField.innerHtml = editingRef.innerHTML;
+			$formData.editingField.originalText = editingRef.innerText;
+			$formData.editingField.innerText = editingRef.innerText;
 		}
 
 		function onFocusOut(e: FocusEvent) {
@@ -130,7 +142,7 @@
 		function onInput(e: Event) {
 			e.stopPropagation();
 			if (e.target instanceof HTMLElement) {
-				$formData.editingField.innerHtml = e.target.innerHTML;
+				$formData.editingField.innerText = e.target.innerHTML;
 			}
 		}
 
@@ -138,29 +150,81 @@
 		return () => editingRef?.removeEventListener('input', onInput);
 	});
 
-	function addField() {
-		if (!editingRef) return;
+	$effect(() => {
+		$formData.fields.forEach((field) => {
+			const ref = fieldRefs[field.id]!;
+			ref.dataset.fieldId = field.id;
+			ref.dataset.fieldName = field.name;
+			ref.dataset.fieldDataType = field.data.type;
+			ref.dataset.fieldDataStartFrom = `${(field.data as IncrementField).startFrom}`;
+		});
+	});
 
-		if (!editingRef.dataset.fieldId) {
-			const newField = {
-				id: nanoid(),
-				name: `Field #${$formData.fields.length + 1}`
-			} satisfies FieldSchema;
-			$formData.fields = [...$formData.fields, newField];
-
-			editingRef.dataset.fieldId = newField.id;
-			editingRef.dataset.fieldName = newField.name;
-		}
+	function removeEditable(el: HTMLElement) {
+		el.removeAttribute('contenteditable');
+		el.removeAttribute('tabindex');
 	}
 
 	function deleteField(i: number) {
-		const ref = fieldRefs[$formData.fields[i].id]!;
-		delete ref.dataset.fieldId;
-		delete ref.dataset.fieldName;
+		const node = fieldRefs[$formData.fields[i].id]!;
+		node.parentNode?.removeChild(node);
 		$formData.fields = $formData.fields.filter((_, idx) => idx !== i);
 	}
 
-	function focusField(field: HTMLElement) {}
+	function createTextEl(text: string) {
+		const textSpan = document.createElement('span');
+		textSpan.innerText = text;
+		textSpan.tabIndex = 0;
+		textSpan.classList.add(EDITABLE_CLASS);
+		return textSpan;
+	}
+
+	function createFieldEl() {
+		const fieldSpan = document.createElement('span');
+		fieldSpan.classList.add(EDITABLE_CLASS, 'field');
+		fieldSpan.tabIndex = 0;
+		return fieldSpan;
+	}
+
+	function processIncrementField(value: string, ref: HTMLElement) {
+		const incrementIdx = value.indexOf('{i}');
+		if (incrementIdx === -1) return;
+
+		let spans: HTMLSpanElement[] = [];
+		const textToReplace = ref.innerText.slice(incrementIdx, incrementIdx + 3);
+
+		const leftText = ref.innerText.slice(0, incrementIdx);
+		if (leftText.length) spans.push(createTextEl(leftText));
+
+		const fieldSpan = createFieldEl();
+		spans.push(fieldSpan);
+
+		const rightText = ref.innerText.slice(incrementIdx + 3);
+		if (rightText.length) spans.push(createTextEl(rightText));
+
+		const parent = ref.parentNode!;
+		parent.childNodes.forEach((child) => {
+			if (child !== ref) return;
+
+			spans.forEach((span) => (child as Element).insertAdjacentElement('beforebegin', span));
+			child.remove();
+		});
+
+		const newField = {
+			id: nanoid(),
+			name: `Incremented field`,
+			data: { type: 'increment', startFrom: 0 }
+		} satisfies FieldSchema;
+		fieldRefs[newField.id] = fieldSpan;
+		$formData.fields = [...$formData.fields, newField];
+		fieldSpan.focus();
+	}
+
+	function editField(e: FormTextareaEvent<InputEvent>) {
+		if (!editingRef) return;
+		$formData.editingField.innerText = e.currentTarget.value;
+		processIncrementField(e.currentTarget.value, editingRef);
+	}
 </script>
 
 <Sheet closeOnOutsideClick={false} bind:open={sheetOpen}>
@@ -181,29 +245,22 @@
 		<div class="flex w-full gap-4">
 			{#if $htmlTemplate.data}
 				<!-- For those weird ${''} pieces: https://github.com/sveltejs/svelte/issues/5292#issuecomment-787743573 -->
-				{@html `<${''}style>${$htmlTemplate.data.styles}</${''}style>`}
+				{@html $htmlTemplate.data.styles}
 			{/if}
 
 			<div class="h-min flex-[0.5] rounded-sm border p-8">
-				<SuperDebug data={$formData} />
-				<form method="post" use:enhance class="flex flex-col gap-4">
-					<FormField {form} name="editingField.innerHtml" class="w-full">
+				<form method="post" use:enhance class="flex flex-col gap-8">
+					<FormField {form} name="editingField.innerText" class="w-full">
 						<FormControl let:attrs>
 							<Label class="text-lg" for="">Text Value</Label>
-							<Textarea
-								{...attrs}
-								value={$formData.editingField.innerHtml}
-								on:input={(e) => {
-									$formData.editingField.innerHtml = e.currentTarget.value;
-									editingRef!.innerHTML = DOMPurify.sanitize(e.currentTarget.value)
-								}}
-							/>
+							<Textarea {...attrs} value={$formData.editingField.innerText} on:input={editField} />
 						</FormControl>
 					</FormField>
 
+					<FormButton>Submit</FormButton>
+
 					<FormFieldset {form} name="fields" class="w-full">
 						<FormLegend>Fields</FormLegend>
-						<Button on:click={addField} disabled={!editingRef}>Turn into field</Button>
 						{#each $formData.fields as _, i}
 							<FormField
 								{form}
@@ -226,7 +283,7 @@
 						{/each}
 					</FormFieldset>
 
-					<FormButton>Submit</FormButton>
+					<SuperDebug data={$formData} />
 				</form>
 			</div>
 
@@ -287,5 +344,16 @@
 		transition: none !important;
 		/* background-color: #e2e8f0; */
 		border-color: #64748b;
+	}
+
+	:global(.field) {
+		height: 24px;
+		width: 24px;
+		background-color: lightblue;
+		border: 1px solid red;
+		display: inline-block;
+	}
+
+	:global(.field:before) {
 	}
 </style>
