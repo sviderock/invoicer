@@ -26,12 +26,12 @@
 	import 'pdfjs-dist/build/pdf.worker.min.mjs';
 	import 'pdfjs-dist/web/pdf_viewer.css';
 	import type { Template } from 'proto/template_pb';
-	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import SuperDebug, { defaults, superForm } from 'sveltekit-superforms';
 	import { valibot } from 'sveltekit-superforms/adapters';
-	import MingcuteDelete2Line from '~icons/mingcute/delete-2-line';
 	import * as v from 'valibot';
+	import LetsIconsBack from '~icons/lets-icons/back';
+	import MingcuteDelete2Line from '~icons/mingcute/delete-2-line';
 
 	type Props = {
 		template: PlainMessage<Template>;
@@ -248,8 +248,19 @@
 				{@html $htmlTemplate.data.styles}
 			{/if}
 
-			<div class="h-min flex-[0.5] rounded-sm border p-8">
-				<form method="post" use:enhance class="flex flex-col gap-8">
+			<div class="flex h-min flex-[0.5] flex-col items-start gap-4 rounded-sm border p-8">
+				<Button
+					size="icon"
+					variant="ghost"
+					class="w-auto gap-2 pl-1 pr-3"
+					on:click={() => {
+						sheetOpen = false;
+					}}
+				>
+					<LetsIconsBack />
+					Back
+				</Button>
+				<form method="post" use:enhance class="flex w-full flex-col gap-8">
 					<FormField {form} name="editingField.innerText" class="w-full">
 						<FormControl let:attrs>
 							<Label class="text-lg" for="">Text Value</Label>
@@ -354,6 +365,7 @@
 		display: inline-block;
 	}
 
-	:global(.field:before) {
+	:global(.super-debug--code) {
+		white-space: pre-wrap;
 	}
 </style>
